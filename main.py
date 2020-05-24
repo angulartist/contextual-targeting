@@ -8,13 +8,13 @@ from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 
-from models.basic import mount_basic_model
+from models.basic import mount_basic_model, mount_conv_model
 
 # Consts
 S_WORDS = set(stopwords.words('english'))
 VB_SIZE = 5000
 EMB_DIM = 64
-MAX_LEN = 300
+MAX_LEN = 200
 TRUNC_T = 'post'
 PADDN_T = 'post'
 OOV_TOK = '<OOV>'
@@ -78,7 +78,7 @@ X_test_padded = pad_sequences(
 print(X_test_padded[10])
 
 # Mount Keras model
-model = mount_basic_model(
+model = mount_conv_model(
     vb_size=VB_SIZE,
     emb_dim=EMB_DIM,
     num_classes=NM_CATS,
@@ -106,11 +106,11 @@ reduce_lr_loss = ReduceLROnPlateau(
 
 model.compile(
     loss='categorical_crossentropy',
-    optimizer='adam',
+    optimizer='rmsprop',
     metrics=['accuracy'],
 )
 
-N_EPOCH = 5
+N_EPOCH = 20
 
 history = model.fit(
     X_train_padded,
