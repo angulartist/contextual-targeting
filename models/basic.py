@@ -28,13 +28,10 @@ def mount_conv_model(vb_size, emb_dim, *, num_classes=3, act='relu'):
     """
     return Sequential([
         layers.Embedding(vb_size, emb_dim),
-        layers.Conv1D(filters=16, kernel_size=3, activation=act),
-        layers.BatchNormalization(),
-        layers.MaxPool1D(2),
         layers.Dropout(0.2),
 
-        layers.Conv1D(filters=32, kernel_size=3, activation=act),
-        layers.BatchNormalization(),
+        layers.Conv1D(filters=16, kernel_size=3, activation=act),
         layers.GlobalMaxPooling1D(),
+        layers.Dense(emb_dim, activation=act),
         layers.Dense(num_classes, activation='softmax'),
     ])

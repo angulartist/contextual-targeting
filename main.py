@@ -1,4 +1,5 @@
 import os
+import re
 
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
@@ -18,7 +19,7 @@ MAX_LEN = 200
 TRUNC_T = 'post'
 PADDN_T = 'post'
 OOV_TOK = '<OOV>'
-FV_CATS = {'SPORTS', 'FOOD & DRINK', 'STYLE & BEAUTY'}
+FV_CATS = {'TRAVEL', 'PARENTING', 'STYLE & BEAUTY'}
 NM_CATS = len(FV_CATS)
 
 CP_PATH = os.path.join('resources', 'w.hdf5')
@@ -29,8 +30,21 @@ df = pd.read_json('dataset/dataset.json')
 # Filter by selected categories
 df = df[df['category'].isin(FV_CATS)]
 
+
+# Data cleaning
+def clean(seq):
+    seq = ' '.join([word for word in seq.lower().split() if word not in S_WORDS])
+
+    seq = re.sub('[^a-zA-Z]', ' ', seq)
+    seq = re.sub(r"\s+[a-zA-Z]\s+", ' ', seq)
+    seq = re.sub(r'\s+', ' ', seq)
+
+    return seq
+
+
 # Isolate examples and their related labels
-X = df['short_description']
+X = (df['short_description']
+     .apply(lambda e: clean(e)))
 y = df['category']
 
 print('Samples=', X.shape, 'Labels=', y.shape)
