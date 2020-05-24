@@ -1,4 +1,7 @@
+import os
+
 import pandas as pd
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from keras.preprocessing.text import Tokenizer
 from keras_preprocessing.sequence import pad_sequences
 from nltk.corpus import stopwords
@@ -18,8 +21,10 @@ OOV_TOK = '<OOV>'
 FV_CATS = {'SPORTS', 'FOOD & DRINK', 'STYLE & BEAUTY'}
 NM_CATS = len(FV_CATS)
 
+CP_PATH = os.path.join('resources', 'w.hdf5')
+
 # Read dataset using Pandas
-df = pd.read_json('./dataset.json')
+df = pd.read_json('dataset/dataset.json')
 
 # Filter by selected categories
 df = df[df['category'].isin(FV_CATS)]
@@ -52,25 +57,66 @@ print(word_items)
 X_train_seq = tokenizer.texts_to_sequences(X_train)
 print(X_train_seq[10])
 
-X_train_padded = pad_sequences(X_train_seq, maxlen=MAX_LEN, padding=PADDN_T, truncating=TRUNC_T)
+X_train_padded = pad_sequences(
+    X_train_seq,
+    maxlen=MAX_LEN,
+    padding=PADDN_T,
+    truncating=TRUNC_T,
+)
 print(X_train_padded[10])
 
 # Test(val) to padded seq
 X_test_seq = tokenizer.texts_to_sequences(X_test)
 print(X_test_seq[10])
 
-X_test_padded = pad_sequences(X_test_seq, maxlen=MAX_LEN, padding=PADDN_T, truncating=TRUNC_T)
+X_test_padded = pad_sequences(
+    X_test_seq,
+    maxlen=MAX_LEN,
+    padding=PADDN_T,
+    truncating=TRUNC_T,
+)
 print(X_test_padded[10])
 
 # Mount Keras model
-model = mount_basic_model(vb_size=VB_SIZE, emb_dim=EMB_DIM, num_classes=NM_CATS)
+model = mount_basic_model(
+    vb_size=VB_SIZE,
+    emb_dim=EMB_DIM,
+    num_classes=NM_CATS,
+)
 model.summary()
 
 # Training phase
 # TODO(@self): Hyperparameters tuning + charts
 
-# model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+checkpoint = ModelCheckpoint(
+    CP_PATH,
+    save_best_only=True,
+    monitor='val_loss',
+    mode='min',
+)
 
-# num_epochs = 10
-# history = model.fit(X_train_padded, y_train, epochs=num_epochs,
-#                     validation_data=(X_test_padded, y_test), verbose=2)
+reduce_lr_loss = ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.1,
+    patience=7,
+    verbose=1,
+    min_delta=1e-4,
+    mode='min',
+)
+
+model.compile(
+    loss='categorical_crossentropy',
+    optimizer='adam',
+    metrics=['accuracy'],
+)
+
+N_EPOCH = 5
+
+history = model.fit(
+    X_train_padded,
+    y_train,
+    validation_data=(X_test_padded, y_test),
+    epochs=N_EPOCH,
+    callbacks=[checkpoint, reduce_lr_loss],
+    verbose=2,
+)
