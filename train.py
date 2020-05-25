@@ -47,7 +47,7 @@ print('Cleaning')
 
 # Isolate examples and their related labels
 X = (df['desc']
-     .apply(lambda e: clean_text(e)))
+     .apply(lambda e: clean_text(e, stops=S_WORDS)))
 y = df['category']
 
 print('Samples=', X.shape, 'Labels=', y.shape)

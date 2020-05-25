@@ -1,51 +1,28 @@
 import re
 import string
 
-from nltk import SnowballStemmer
-from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 
-def clean_text(text):
+def clean_text(text, *, stops=None):
+    print(text)
     text = text.translate(string.punctuation)
+    text = text.lower()
 
-    text = text.lower().split()
+    text = re.sub(r'(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)|^rt|http.+?', '', text)
 
-    stops = set(stopwords.words('english'))
-    text = [w for w in text if not w in stops and len(w) >= 3]
+    text = re.sub(r'\d+', '', text)
 
-    text = ' '.join(text)
-    text = re.sub(r"[^A-Za-z0-9^,!.\/'+-=]", " ", text)
-    text = re.sub(r"what's", "what is ", text)
-    text = re.sub(r"\'s", " ", text)
-    text = re.sub(r"\'ve", " have ", text)
-    text = re.sub(r"n't", " not ", text)
-    text = re.sub(r"i'm", "i am ", text)
-    text = re.sub(r"\'re", " are ", text)
-    text = re.sub(r"\'d", " would ", text)
-    text = re.sub(r"\'ll", " will ", text)
-    text = re.sub(r",", " ", text)
-    text = re.sub(r"\.", " ", text)
-    text = re.sub(r"!", " ! ", text)
-    text = re.sub(r"\/", " ", text)
-    text = re.sub(r"\^", " ^ ", text)
-    text = re.sub(r"\+", " + ", text)
-    text = re.sub(r"\-", " - ", text)
-    text = re.sub(r"\=", " = ", text)
-    text = re.sub(r"'", " ", text)
-    text = re.sub(r"(\d+)(k)", r"\g<1>000", text)
-    text = re.sub(r":", " : ", text)
-    text = re.sub(r" e g ", " eg ", text)
-    text = re.sub(r" b g ", " bg ", text)
-    text = re.sub(r" u s ", " american ", text)
-    text = re.sub(r"\0s", "0", text)
-    text = re.sub(r" 9 11 ", "911", text)
-    text = re.sub(r"e - mail", "email", text)
-    text = re.sub(r"j k", "jk", text)
-    text = re.sub(r"\s{2,}", " ", text)
+    if stops is not None:
+        text = ' '.join([word for word in text.split() if word not in stops])
 
-    text = text.split()
-    stemmer = SnowballStemmer('english')
-    stemmed_words = [stemmer.stem(word) for word in text]
-    text = ' '.join(stemmed_words)
+    text = ' '.join([WordNetLemmatizer().lemmatize(word) for word in text.split() if len(word) > 1])
 
     return text
+
+# x = clean_text(
+#     'Offers a selection of #electronic @parts such as LCD      inverters, u\÷¬ôôô€€€€@}}“—‘ plasma... !! parts, juin 1932 32 - _ ! _°) !§è "bendo" integrated circuits, and fuses and resistors.',
+#     stops=set(stopwords.words('english'))
+# )
+#
+# print(x)
