@@ -30,10 +30,14 @@ def mount_conv_model(vb_size, emb_dim, *, max_len=100, num_classes=3, act='relu'
     """
     model = Sequential([
         layers.Embedding(vb_size, emb_dim, input_length=max_len),
-        layers.Conv1D(filters=16, kernel_size=3, activation=act),
-        layers.MaxPooling1D(pool_size=4),
-        layers.Flatten(),
-        layers.Dense(32, activation=act),
+        layers.Conv1D(16, 5, activation=act),
+        layers.MaxPool1D(3),
+        layers.Conv1D(16, 5, activation=act),
+        layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5)),
+        # layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5)),
+        # layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5, return_sequences=True)),
+        # layers.Flatten(),
+        # layers.Dense(32),
         layers.Dense(num_classes, activation='softmax'),
     ])
 

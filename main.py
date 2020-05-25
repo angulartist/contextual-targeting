@@ -20,25 +20,33 @@ MAX_LEN = 100
 TRUNC_T = 'post'
 PADDN_T = 'post'
 OOV_TOK = '<OOV>'
-FV_CATS = {'TRAVEL', 'PARENTING', 'STYLE & BEAUTY'}
+FV_CATS = {'Shopping', 'Recreation', 'Sports'}
 NM_CATS = len(FV_CATS)
 
-DT_PATH = os.path.join('dataset', 'dataset.json')
+DT_PATH = os.path.join('dataset', 'dmz.csv')
 CW_PATH = os.path.join('resources', 'glove.50d.idx.pkl')
 CP_PATH = os.path.join('resources', 'w.hdf5')
 
 # Read dataset using Pandas
-df = pd.read_json(DT_PATH)
+df = pd.read_csv(DT_PATH, index_col=0)
+#
+# print(df)
+# print(df['category'].unique())
+# print(df.groupby(['category']).count())
+#
+# exit(1)
 
 # Filter by selected categories
 df = df[df['category'].isin(FV_CATS)]
 
 # Data cleaning
 df = df.dropna()
-df = df[df['short_description'].apply(lambda e: bool(len(e)))]
+df = df[df['desc'].apply(lambda e: bool(len(e)))]
+
+print('Cleaning')
 
 # Isolate examples and their related labels
-X = (df['short_description']
+X = (df['desc']
      .apply(lambda e: clean_text(e)))
 y = df['category']
 
@@ -114,14 +122,7 @@ checkpoint = ModelCheckpoint(
     mode='min',
 )
 
-reduce_lr_loss = ReduceLROnPlateau(
-    monitor='val_loss',
-    factor=0.1,
-    patience=7,
-    verbose=1,
-    min_delta=1e-4,
-    mode='min',
-)
+reduce_lr_loss = ReduceLROnPlateau(monitor='val_loss', patience=5, cooldown=0)
 
 model.compile(
     loss='categorical_crossentropy',
