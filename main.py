@@ -1,5 +1,4 @@
 import os
-import re
 
 import pandas as pd
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
@@ -9,42 +8,38 @@ from nltk.corpus import stopwords
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 
-from models.basic import mount_basic_model, mount_conv_model
-
+from models.basic import mount_conv_model
 # Consts
+from utils.formatter import clean_text
+from utils.pretrained import glove_matrix
+
 S_WORDS = set(stopwords.words('english'))
-VB_SIZE = 5000
-EMB_DIM = 64
-MAX_LEN = 200
+VB_SIZE = 10000
+EMB_DIM = 50
+MAX_LEN = 100
 TRUNC_T = 'post'
 PADDN_T = 'post'
 OOV_TOK = '<OOV>'
 FV_CATS = {'TRAVEL', 'PARENTING', 'STYLE & BEAUTY'}
 NM_CATS = len(FV_CATS)
 
+CW_PATH = os.path.join('dataset', 'glove.6B.50d.txt')
+DT_PATH = os.path.join('dataset', 'dataset.json')
 CP_PATH = os.path.join('resources', 'w.hdf5')
 
 # Read dataset using Pandas
-df = pd.read_json('dataset/dataset.json')
+df = pd.read_json(DT_PATH)
 
 # Filter by selected categories
 df = df[df['category'].isin(FV_CATS)]
 
-
 # Data cleaning
-def clean(seq):
-    seq = ' '.join([word for word in seq.lower().split() if word not in S_WORDS])
-
-    seq = re.sub('[^a-zA-Z]', ' ', seq)
-    seq = re.sub(r"\s+[a-zA-Z]\s+", ' ', seq)
-    seq = re.sub(r'\s+', ' ', seq)
-
-    return seq
-
+df = df.dropna()
+df = df[df['short_description'].apply(lambda e: bool(len(e)))]
 
 # Isolate examples and their related labels
 X = (df['short_description']
-     .apply(lambda e: clean(e)))
+     .apply(lambda e: clean_text(e)))
 y = df['category']
 
 print('Samples=', X.shape, 'Labels=', y.shape)
@@ -91,11 +86,21 @@ X_test_padded = pad_sequences(
 )
 print(X_test_padded[10])
 
+# Pre-trained embedding weights
+weights_matrix = glove_matrix(
+    CW_PATH,
+    tokenizer=tokenizer,
+    vb_size=VB_SIZE,
+    emb_dim=EMB_DIM,
+)
+
 # Mount Keras model
 model = mount_conv_model(
     vb_size=VB_SIZE,
     emb_dim=EMB_DIM,
+    max_len=MAX_LEN,
     num_classes=NM_CATS,
+    weights=weights_matrix,
 )
 model.summary()
 
@@ -131,6 +136,7 @@ history = model.fit(
     y_train,
     validation_data=(X_test_padded, y_test),
     epochs=N_EPOCH,
+    batch_size=32,
     callbacks=[checkpoint, reduce_lr_loss],
     verbose=2,
 )
