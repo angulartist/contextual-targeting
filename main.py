@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelBinarizer
 from models.basic import mount_conv_model
 # Consts
 from utils.formatter import clean_text
-from utils.pretrained import glove_matrix
+from utils.pretrained import _glove_matrix
 
 S_WORDS = set(stopwords.words('english'))
 VB_SIZE = 10000
@@ -23,8 +23,8 @@ OOV_TOK = '<OOV>'
 FV_CATS = {'TRAVEL', 'PARENTING', 'STYLE & BEAUTY'}
 NM_CATS = len(FV_CATS)
 
-CW_PATH = os.path.join('dataset', 'glove.6B.50d.txt')
 DT_PATH = os.path.join('dataset', 'dataset.json')
+CW_PATH = os.path.join('resources', 'glove.50d.idx.pkl')
 CP_PATH = os.path.join('resources', 'w.hdf5')
 
 # Read dataset using Pandas
@@ -87,7 +87,7 @@ X_test_padded = pad_sequences(
 print(X_test_padded[10])
 
 # Pre-trained embedding weights
-weights_matrix = glove_matrix(
+weights_matrix = _glove_matrix(
     CW_PATH,
     tokenizer=tokenizer,
     vb_size=VB_SIZE,
