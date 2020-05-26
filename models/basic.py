@@ -28,16 +28,23 @@ def mount_conv_model(vb_size, emb_dim, *, max_len=100, num_classes=3, act='relu'
     :param act:
     :return:
     """
+
+    print('cls', num_classes)
+
     model = Sequential([
         layers.Embedding(vb_size, emb_dim, input_length=max_len),
-        layers.Conv1D(16, 5, activation=act),
+        layers.Dropout(0.2),
+        layers.Conv1D(32, 5, activation=act),
         layers.MaxPool1D(3),
-        layers.Conv1D(16, 5, activation=act),
-        layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5)),
+        layers.Conv1D(32, 5, activation=act),
+        layers.MaxPool1D(3),
+        layers.Conv1D(32, 5, activation=act),
+        # layers.GlobalAveragePooling1D(),
+        # layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5)),
         # layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5)),
         # layers.Bidirectional(layers.GRU(16, dropout=0.1, recurrent_dropout=0.5, return_sequences=True)),
-        # layers.Flatten(),
-        # layers.Dense(32),
+        layers.Flatten(),
+        layers.Dense(32),
         layers.Dense(num_classes, activation='softmax'),
     ])
 

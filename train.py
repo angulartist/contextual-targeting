@@ -10,44 +10,36 @@ from sklearn.preprocessing import LabelBinarizer
 
 from models.basic import mount_conv_model
 # Consts
-from utils.formatter import clean_text
 from utils.pretrained import _glove_matrix
 
 S_WORDS = set(stopwords.words('english'))
 VB_SIZE = 10000
-EMB_DIM = 50
+EMB_DIM = 100
 MAX_LEN = 100
 TRUNC_T = 'post'
 PADDN_T = 'post'
 OOV_TOK = '<OOV>'
-FV_CATS = {'Shopping', 'Recreation', 'Sports'}
-NM_CATS = len(FV_CATS)
+TST_CAT = {'Shopping', 'Computers', 'Arts', 'Business', 'Recreation'}
 
-DT_PATH = os.path.join('dataset', 'dmz.csv')
-CW_PATH = os.path.join('resources', 'glove.50d.idx.pkl')
+DT_PATH = os.path.join('dataset', 'dmz_50k.csv')
+CW_PATH = os.path.join('resources', 'glove.100d.pkl')
 CP_PATH = os.path.join('resources', 'w.hdf5')
 
 # Read dataset using Pandas
-df = pd.read_csv(DT_PATH, index_col=0)
-#
-# print(df)
-# print(df['category'].unique())
-# print(df.groupby(['category']).count())
-#
-# exit(1)
+df = pd.read_csv(DT_PATH)
 
-# Filter by selected categories
-df = df[df['category'].isin(FV_CATS)]
+df.dropna(inplace=True)
+df.drop_duplicates(subset=['desc_clean'], inplace=True)
+print(df.describe())
+print(df.info())
 
-# Data cleaning
-df = df.dropna()
-df = df[df['desc'].apply(lambda e: bool(len(e)))]
-
-print('Cleaning')
+# Grab targets
+FV_CATS = set(df['category'].unique())
+NM_CATS = len(TST_CAT)
+df = df[df['category'].isin(TST_CAT)]
 
 # Isolate examples and their related labels
-X = (df['desc']
-     .apply(lambda e: clean_text(e, stops=S_WORDS)))
+X = df['desc_clean']
 y = df['category']
 
 print('Samples=', X.shape, 'Labels=', y.shape)
@@ -61,6 +53,8 @@ y = encoder.fit_transform(y)
 X_train, X_test, y_train, y_test = train_test_split(X, y, shuffle=True, random_state=42)
 
 print('Train samples=', X_train.shape, 'Train labels=', y_train.shape)
+
+print(X_train[420])
 
 # Tokenize data
 tokenizer = Tokenizer(num_words=VB_SIZE, oov_token=OOV_TOK)
